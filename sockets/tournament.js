@@ -1,18 +1,9 @@
 var tournamentService = require('../services/tournament');
 
 module.exports = function(io) {
-	var challongeIO = io.of('/challonge');
+	var tournamentIo = io.of('/tournament');
 
-	challongeIO.on('connection', function(socket) {
-
-		tournamentService.getTournaments(function(tournaments) {
-			socket.emit('tournament list', tournaments);
-		});
-
-		socket.on('tournament add', function(tournamentName) {
-			tournamentService.addTournament(tournamentName, function(tournaments) {
-				socket.emit('tournament list', tournaments);
-			});
-		});
+	tournamentIo.on('connection', function(socket) {
+		console.log('new socket');
 	});
 };
