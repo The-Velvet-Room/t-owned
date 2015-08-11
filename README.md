@@ -11,4 +11,4 @@ How to run
 
 3. Run `npm install`.
 
-4. Mac/Linux, run `DEBUG=t-owned bin/www` to start the project. In Powershell, set an environment variable with `$env:DEBUG = "web-overlay"` before running `node bin/www`.
+4. Mac/Linux, run `DEBUG=t-owned bin/www` to start the project. In Powershell, set an environment variable with `$env:DEBUG = "t-owned"` before running `node bin/www`.
