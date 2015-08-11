@@ -5,7 +5,7 @@ $(function() {
         $('#tournament-list').empty();
         var tournamentNames = Object.keys(tournaments);
         for (var i = 0; i < tournamentNames.length; i++) {
-            $('#tournament-list').append('<li class="tournament">' + tournamentNames[i] + '</li>');
+            $('#tournament-list').append('<li class="tournament"><a href="tournaments/' + tournamentNames[i] + '">' + tournamentNames[i] + '</a></li>');
         }
     });
 
