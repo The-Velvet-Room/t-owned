@@ -7,11 +7,12 @@ router.get('/', function(req, res) {
   res.render('index', { title: 'TVR' });
 });
 
-/* GET admin page. */
-router.get('/admin', function(req, res) {
-  res.render('admin', { title: 'Admin' });
+/* GET tournament list page. */
+router.get('/tournaments', function(req, res) {
+  res.render('tournament-list', { title: 'Tournaments' });
 });
 
+/* GET tournament page. */
 router.get('/tournaments/:name', function(req, res) {
 	tournamentService.getTournaments(function(tournaments) {
 		if (tournaments[req.params.name]) {
