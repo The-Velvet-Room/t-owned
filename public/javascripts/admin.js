@@ -1,7 +1,6 @@
 var socket = io('/tournamentList');
 
 $(function() {
-
     socket.on('tournament list', function(tournaments) {
         $('#tournament-list').empty();
         var tournamentNames = Object.keys(tournaments);
@@ -9,7 +8,6 @@ $(function() {
             $('#tournament-list').append('<li class="tournament">' + tournamentNames[i] + '</li>');
         }
     });
-
 
     $('#add-tournament').click(function() {
         var value = $('#new-tournament-name').val();

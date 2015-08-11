@@ -35,6 +35,7 @@ TournamentService.prototype.addTournament = function(tournamentName, callback) {
 				callback(tournaments);
 			}
 		});
+		client.set(getTournamentInfoKey(tournamentName), JSON.stringify({}));
 	});
 };
 
@@ -42,11 +43,12 @@ TournamentService.prototype.removeTournament = function(tournamentName, callback
 	client.get(tournamentList, function(err, reply) {
 		var tournaments = JSON.parse(reply);
 		delete tournaments[tournamentName];
-		client.set(tournamentList, JSON.stringify(tournaments), function () {
+		client.set(tournamentList, JSON.stringify(tournaments), function() {
 			if (callback) {
 				callback(tournaments);
 			}
 		});
+		client.del(getTournamentInfoKey(tournamentName));
 	});
 };
 
@@ -68,6 +70,33 @@ TournamentService.prototype.setTournamentInfo = function(tournamentName, tournam
 		} else if (callback) {
 			return callback(tournamentInfo);
 		}
+	});
+};
+
+TournamentService.prototype.setChallongeUrl = function(tournamentName, url, callback) {
+	var _this = this;
+	_this.getTournamentInfo(tournamentName, function(info) {
+		var newInfo = info === null ? {} : info;
+		newInfo.challongeUrl = url;
+		_this.setTournamentInfo(tournamentName, newInfo, function() {
+			if (callback) {
+				callback(newInfo);
+			}
+		});
+	});
+};
+
+TournamentService.prototype.addSetup = function(tournamentName, callback) {
+	var _this = this;
+	_this.getTournamentInfo(tournamentName, function(info) {
+		var newInfo = info === null ? {} : info;
+		newInfo.setups = newInfo.setups || [];
+		newInfo.setups.push({});
+		_this.setTournamentInfo(tournamentName, newInfo, function() {
+			if (callback) {
+				callback(newInfo);
+			}
+		});
 	});
 };
 

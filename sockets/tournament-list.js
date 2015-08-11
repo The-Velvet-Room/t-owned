@@ -8,7 +8,7 @@ module.exports = function(io) {
         console.log('tournament-list user connected: ' + socket.handshake.address + ' -> ' + socket.request.headers.referer);
 
 		tournamentService.getTournaments(function(tournaments) {
-			tournamentListIo.emit('tournament list', tournaments);
+			tournamentListIo.to(socket.id).emit('tournament list', tournaments);
 		});
 
 		socket.on('tournament add', function(tournamentName) {
