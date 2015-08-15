@@ -10,6 +10,9 @@ module.exports = function(io) {
 		tournamentIo.to(socket.id).emit('request room');
 
 		socket.on('join room', function(room) {
+            if (socket.rooms.length > 2) {
+                console.error('Tournament socket is in multiple rooms: ' + socket.rooms);
+            }
 			socket.join(room, function() {
 				tournamentService.getTournamentInfo(room, function(info) {
 					tournamentIo.to(socket.id).emit('tournament info', info);

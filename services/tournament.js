@@ -6,7 +6,7 @@ var tournamentList = tournamentBaseKey + 'list';
 
 var TournamentService = function TournamentService() {
 	var emptyArray = JSON.stringify({});
-    client.set(tournamentList, emptyArray, 'NX', function(err) {
+    client.setnx(tournamentList, emptyArray, function(err) {
         if (err) {
             console.log(err);
         }
