@@ -15,6 +15,8 @@ module.exports = function(io) {
             }
 			socket.join(room, function() {
 				tournamentService.getTournamentInfo(room, function(info) {
+					console.log('joining and emitting');
+					console.log(info);
 					tournamentIo.to(socket.id).emit('tournament info', info);
 				});
 			});
@@ -23,6 +25,7 @@ module.exports = function(io) {
 		socket.on('save challonge url', function(url) {
 			var tournament = socket.rooms[socket.rooms.length - 1];
 			tournamentService.setChallongeUrl(tournament, url, function(info) {
+				console.log('saving challonge url and emitting');
 				tournamentIo.to(tournament).emit('tournament info', info);
 			});
 		});
@@ -30,6 +33,15 @@ module.exports = function(io) {
 		socket.on('add setup', function() {
 			var tournament = socket.rooms[socket.rooms.length - 1];
 			tournamentService.addSetup(tournament, function(info) {
+				console.log('adding setup and emitting');
+				tournamentIo.to(tournament).emit('tournament info', info);
+			});
+		});
+
+		socket.on('assign setup', function(setupId, matchId) {
+			var tournament = socket.rooms[socket.rooms.length - 1];
+			tournamentService.assignSetup(tournament, setupId, matchId, function(info) {
+				console.log('assigning setup and emitting');
 				tournamentIo.to(tournament).emit('tournament info', info);
 			});
 		});

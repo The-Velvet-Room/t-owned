@@ -1,6 +1,9 @@
 var tournamentSocket = io('/tournament');
 var challongeSocket = io('/challonge');
 var setups = [];
+var playerDict = {};
+var matchDict = {};
+var matchList = [];
 
 function getLastPartOfUrl() {
 	var partArray = window.location.href.split('/');
@@ -11,30 +14,47 @@ function getLastPartOfUrl() {
 	return lastPart;
 }
 
-function getAvailableMatches(challongeInfo) {
+function getAssignedMatchIds(setupList) {
+	var assignedMatchDict = {};
+    setupList.forEach(function(setup) {
+		if (setup.status === 'Assigned' && setup.matchId) {
+			assignedMatchDict[setup.matchId] = true;
+		}
+    });
+    return assignedMatchDict;
+}
+
+function getAvailableMatches(matches) {
     var availableMatches = [];
-    challongeInfo.matches.forEach(function(match) {
-        if (match.match.state === 'open') {
+    var assignedMatches = getAssignedMatchIds(setups);
+    matches.forEach(function(match) {
+        if (match.match.state === 'open' && !assignedMatches[match.match.id]) {
             availableMatches.push(match);
         }
     });
     return availableMatches;
 }
 
-function getPlayerDictionary(challongeInfo) {
-    var playerDict = {};
-
-    challongeInfo.participants.forEach(function(player) {
-        playerDict[player.participant.id] = player.participant.name || player.participant.username;
+function getPlayerDictionary(players) {
+    var playerDictionary = {};
+    players.forEach(function(player) {
+        playerDictionary[player.participant.id] = player.participant.name || player.participant.username;
     });
+    return playerDictionary;
+}
 
-    return playerDict;
+function getMatchDictionary(matches) {
+    var matchDictionary = {};
+    matches.forEach(function(match) {
+        matchDictionary[match.match.id] = match.match;
+    });
+    return matchDictionary;
 }
 
 function buildSetupSelector(setupList) {
 	var $selector = $('<select class="setup-selector"><option value="" disabled selected style="display:none;"></option></select>');
 	for (var i = 0; i < setupList.length; i++) {
-		if (!setupList[i].status) {
+		if (!setupList[i].status || setupList[i].status === 'Open') {
 			$selector.append('<option value=' + (i + 1) + '>' + (i + 1) + '</option>');
 		}
 	}
@@ -61,10 +81,34 @@ function updateMatchList(availableMatches, players) {
 	$('.setup-selector').append($setupSelector.clone());
 }
 
+function updateSetupsList(setupsList) {
+	var $setupsList = $('#setups-list');
+	$setupsList.empty();
+	for (var i = 0; i < setupsList.length; i++) {
+		var setup = setupsList[i];
+		var $setup = $('<li></li>');
+		$setup.append('<div class="setup-id">' + (i + 1) + '</div>');
+		if (setup.status) {
+			$setup.append('<div class="setup-status">' + setup.status + '</div>');
+		}
+		if (setup.status === 'Assigned') {
+			var match = matchDict[setup.matchId];
+			if (match) {
+				var player1 = playerDict[match.player1_id];
+				var player2 = playerDict[match.player2_id];
+				$setup.append('<div>' + player1 + ' vs ' + player2 + '</div>');
+			}
+		}
+		$setupsList.append($setup);
+	}
+}
+
 $(function() {
 	$(document).on('change', '.setup-selector', function() {
-		var setup = $(this).val();
-
+		var setupIndex = $(this).val() - 1;
+		var tableRow = $(this).closest('.available-match-row');
+		var matchId = tableRow.data('id');
+		tournamentSocket.emit('assign setup', setupIndex, matchId);
 	});
 
 	$('#save-challonge-url').click(function() {
@@ -78,15 +122,22 @@ $(function() {
 
 	challongeSocket.on('request room', function() {
 		var challongeUrl = $('#challonge-url').val();
-		tournamentSocket.emit('join room', challongeUrl);
+		if (challongeUrl !== '') {
+			challongeSocket.emit('join room', challongeUrl);
+		}
 	});
 
 	challongeSocket.on('tournament info', function(info) {
-		var availableMatches = getAvailableMatches(info);
-		var players = getPlayerDictionary(info);
+		var availableMatchList;
 
-		updateMatchList(availableMatches, players);
-		$('.available-match-count').text(availableMatches.length);
+		matchList = info.matches;
+		availableMatchList = getAvailableMatches(matchList);
+		playerDict = getPlayerDictionary(info.participants);
+		matchDict = getMatchDictionary(info.matches);
+
+		updateMatchList(availableMatchList, playerDict);
+		updateSetupsList(setups);
+		$('.available-match-count').text(availableMatchList.length);
 	});
 
 	tournamentSocket.on('request room', function() {
@@ -97,29 +148,22 @@ $(function() {
 	tournamentSocket.on('tournament info', function(info) {
 		var $setupsList;
 		var $challongeUrl;
+		var availableMatchList;
 		if (!info) {
 			return;
 		}
-		if (info.challongeUrl) {
+		if (info.challongeUrl && info.challongeUrl !== '') {
 			$challongeUrl = $('#challonge-url');
 			if ($challongeUrl.val() !== info.challongeUrl) {
 				$challongeUrl.val(info.challongeUrl);
 				challongeSocket.emit('join room', info.challongeUrl);
 			}
 		}
-		$setupsList = $('#setups-list');
-		$setupsList.empty();
-		if (info.setups) {
-			setups = info.setups;
-			for (var i = 0; i < info.setups.length; i++) {
-				var setup = info.setups[i];
-				var $setup = $('<li></li>');
-				$setup.append('<div class="setup-id">' + (i + 1) + '</div>');
-				if (!setup.status) {
-					$setup.append('<div class="available-matches"></div>');
-				}
-				$setupsList.append($setup);
-			}
-		}
+		setups = info.setups;
+		updateSetupsList(setups);
+
+		availableMatchList = getAvailableMatches(matchList);
+		updateMatchList(availableMatchList, playerDict);
+		$('.available-match-count').text(availableMatchList.length);
 	});
 });

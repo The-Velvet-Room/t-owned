@@ -29,13 +29,17 @@ TournamentService.prototype.getTournaments = function(callback) {
 TournamentService.prototype.addTournament = function(tournamentName, callback) {
 	client.get(tournamentList, function(err, reply) {
 		var tournaments = JSON.parse(reply);
+		var defaultTournament = {
+			challongeUrl: null,
+			setups: [],
+		};
 		tournaments[tournamentName] = true;
 		client.set(tournamentList, JSON.stringify(tournaments), function() {
 			if (callback) {
 				callback(tournaments);
 			}
 		});
-		client.set(getTournamentInfoKey(tournamentName), JSON.stringify({}));
+		client.set(getTournamentInfoKey(tournamentName), JSON.stringify(defaultTournament));
 	});
 };
 
@@ -91,7 +95,25 @@ TournamentService.prototype.addSetup = function(tournamentName, callback) {
 	_this.getTournamentInfo(tournamentName, function(info) {
 		var newInfo = info === null ? {} : info;
 		newInfo.setups = newInfo.setups || [];
-		newInfo.setups.push({});
+		newInfo.setups.push({
+			status: 'Open'
+		});
+		_this.setTournamentInfo(tournamentName, newInfo, function() {
+			if (callback) {
+				callback(newInfo);
+			}
+		});
+	});
+};
+
+TournamentService.prototype.assignSetup = function(tournamentName, setupId, matchId, callback) {
+	var _this = this;
+	_this.getTournamentInfo(tournamentName, function(info) {
+		var newInfo = info === null ? {} : info;
+		if (newInfo.setups && newInfo.setups[setupId]) {
+			newInfo.setups[setupId].status = 'Assigned';
+			newInfo.setups[setupId].matchId = matchId;
+		}
 		_this.setTournamentInfo(tournamentName, newInfo, function() {
 			if (callback) {
 				callback(newInfo);

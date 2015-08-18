@@ -10,7 +10,7 @@ module.exports = function(io) {
         challongeIO.to(socket.id).emit('request room');
 
         socket.on('join room', function(room) {
-            console.log('Joining room: ' + room);
+            console.log('Joining challonge room: ' + room);
             if (socket.rooms.length > 2) {
                 console.error('Challonge socket is in multiple rooms: ' + socket.rooms);
             }
