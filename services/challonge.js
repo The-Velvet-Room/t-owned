@@ -5,7 +5,7 @@ var pmx = require('pmx');
 
 var client = redis.createClient();
 
-var challongeExpireSeconds = 10;
+var challongeExpireSeconds = 8;
 var challongeApiRoot = 'https://api.challonge.com/v1';
 var challongeBaseKey = 'challonge-';
 

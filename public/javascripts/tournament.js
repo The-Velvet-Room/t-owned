@@ -4,6 +4,7 @@ var setups = [];
 var playerDict = {};
 var matchDict = {};
 var matchList = [];
+var timeout = null;
 
 function getLastPartOfUrl() {
 	var partArray = window.location.href.split('/');
@@ -74,11 +75,11 @@ function updateMatchList(availableMatches, players) {
 		tableRow.push('<tr class="available-match-row" data-id="' + match.match.id + '"><td>');
 		tableRow.push(player1 + ' vs. ' + player2);
 		tableRow.push('</td><td>');
-		tableRow.push('<div class="setup-selector"></div>');
+		tableRow.push('<div class="setup-selector-wrap"></div>');
 		tableRow.push('</td></tr>');
 		$matchList.append(tableRow.join(''));
 	});
-	$('.setup-selector').append($setupSelector.clone());
+	$('.setup-selector-wrap').append($setupSelector.clone());
 }
 
 function updateSetupsList(setupsList) {
@@ -86,7 +87,7 @@ function updateSetupsList(setupsList) {
 	$setupsList.empty();
 	for (var i = 0; i < setupsList.length; i++) {
 		var setup = setupsList[i];
-		var $setup = $('<li></li>');
+		var $setup = $('<li class="setup-row" data-id="' + (i + 1) + '"></li>');
 		$setup.append('<div class="setup-id">' + (i + 1) + '</div>');
 		if (setup.status) {
 			$setup.append('<div class="setup-status">' + setup.status + '</div>');
@@ -98,6 +99,7 @@ function updateSetupsList(setupsList) {
 				var player2 = playerDict[match.player2_id];
 				$setup.append('<div>' + player1 + ' vs ' + player2 + '</div>');
 			}
+			$setup.append('<a href="" class="reassign-setup">Reassign</a>');
 		}
 		$setupsList.append($setup);
 	}
@@ -109,6 +111,13 @@ $(function() {
 		var tableRow = $(this).closest('.available-match-row');
 		var matchId = tableRow.data('id');
 		tournamentSocket.emit('assign setup', setupIndex, matchId);
+	});
+
+	$(document).on('click', '.reassign-setup', function(e) {
+		e.preventDefault();
+		var tableRow = $(this).closest('.setup-row');
+		var setupIndex = tableRow.data('id') - 1;
+		tournamentSocket.emit('open setup', setupIndex);
 	});
 
 	$('#save-challonge-url').click(function() {
@@ -138,6 +147,11 @@ $(function() {
 		updateMatchList(availableMatchList, playerDict);
 		updateSetupsList(setups);
 		$('.available-match-count').text(availableMatchList.length);
+
+		clearTimeout(timeout);
+		timeout = setTimeout(function() {
+			challongeSocket.emit('request tournament info');
+		}, 10000);
 	});
 
 	tournamentSocket.on('request room', function() {

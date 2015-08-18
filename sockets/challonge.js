@@ -21,7 +21,7 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('request tournament', function() {
+        socket.on('request tournament info', function() {
             var tournament = socket.rooms[socket.rooms.length - 1];
             console.log('Requesting tournament for ' + tournament);
             challongeService.getTournament(tournament, function(info) {

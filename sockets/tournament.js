@@ -45,5 +45,13 @@ module.exports = function(io) {
 				tournamentIo.to(tournament).emit('tournament info', info);
 			});
 		});
+
+		socket.on('open setup', function(setupId) {
+			var tournament = socket.rooms[socket.rooms.length - 1];
+			tournamentService.openSetup(tournament, setupId, function(info) {
+				console.log('opening setup and emitting');
+				tournamentIo.to(tournament).emit('tournament info', info);
+			});
+		});
 	});
 };

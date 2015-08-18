@@ -122,4 +122,20 @@ TournamentService.prototype.assignSetup = function(tournamentName, setupId, matc
 	});
 };
 
+TournamentService.prototype.openSetup = function(tournamentName, setupId, callback) {
+	var _this = this;
+	_this.getTournamentInfo(tournamentName, function(info) {
+		var newInfo = info === null ? {} : info;
+		if (newInfo.setups && newInfo.setups[setupId]) {
+			newInfo.setups[setupId].status = 'Open';
+			newInfo.setups[setupId].matchId = null;
+		}
+		_this.setTournamentInfo(tournamentName, newInfo, function() {
+			if (callback) {
+				callback(newInfo);
+			}
+		});
+	});
+};
+
 module.exports = new TournamentService();
