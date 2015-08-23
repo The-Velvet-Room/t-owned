@@ -17,6 +17,10 @@ function getTournamentInfoKey(tournamentName) {
 	return tournamentBaseKey + 'info-' + tournamentName;
 }
 
+function getTournamentChallongeKey(tournamentName) {
+	return tournamentBaseKey + 'challonge-' + tournamentName;
+}
+
 TournamentService.prototype.getTournaments = function(callback) {
 	client.get(tournamentList, function(err, reply) {
 		var tournaments = JSON.parse(reply);
@@ -30,7 +34,6 @@ TournamentService.prototype.addTournament = function(tournamentName, callback) {
 	client.get(tournamentList, function(err, reply) {
 		var tournaments = JSON.parse(reply);
 		var defaultTournament = {
-			challongeUrl: null,
 			setups: [],
 		};
 		tournaments[tournamentName] = true;
@@ -77,16 +80,23 @@ TournamentService.prototype.setTournamentInfo = function(tournamentName, tournam
 	});
 };
 
+TournamentService.prototype.getChallongeUrl = function(tournamentName, callback) {
+	client.get(getTournamentChallongeKey(tournamentName), function(err, reply) {
+		if (err) {
+			console.log(err);
+		} else if (callback) {
+			return callback(reply);
+		}
+	});
+};
+
 TournamentService.prototype.setChallongeUrl = function(tournamentName, url, callback) {
-	var _this = this;
-	_this.getTournamentInfo(tournamentName, function(info) {
-		var newInfo = info === null ? {} : info;
-		newInfo.challongeUrl = url;
-		_this.setTournamentInfo(tournamentName, newInfo, function() {
-			if (callback) {
-				callback(newInfo);
-			}
-		});
+	client.set(getTournamentChallongeKey(tournamentName), url, function(err) {
+		if (err) {
+			console.log(err);
+		} else {
+			callback(url);
+		}
 	});
 };
 

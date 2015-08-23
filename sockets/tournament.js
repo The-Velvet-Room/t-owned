@@ -7,16 +7,20 @@ module.exports = function(io) {
         // Log the new connection
         console.log('tournament user connected: ' + socket.handshake.address + ' -> ' + socket.request.headers.referer);
 
-		tournamentIo.to(socket.id).emit('request room');
-
 		socket.on('join room', function(room) {
             if (socket.rooms.length > 2) {
                 console.error('Tournament socket is in multiple rooms: ' + socket.rooms);
             }
 			socket.join(room, function() {
+				console.log('joining tournament: ' + room);
+				tournamentService.getChallongeUrl(room, function(url) {
+					if (url) {
+						console.log('emitting challonge url for ' + room);
+						tournamentIo.to(socket.id).emit('challonge url', url);
+					}
+				});
 				tournamentService.getTournamentInfo(room, function(info) {
-					console.log('joining and emitting');
-					console.log(info);
+					console.log('emitting tournament info for ' + room);
 					tournamentIo.to(socket.id).emit('tournament info', info);
 				});
 			});
@@ -24,9 +28,9 @@ module.exports = function(io) {
 
 		socket.on('save challonge url', function(url) {
 			var tournament = socket.rooms[socket.rooms.length - 1];
-			tournamentService.setChallongeUrl(tournament, url, function(info) {
+			tournamentService.setChallongeUrl(tournament, url, function(savedUrl) {
 				console.log('saving challonge url and emitting');
-				tournamentIo.to(tournament).emit('tournament info', info);
+				tournamentIo.to(tournament).emit('challonge url', savedUrl);
 			});
 		});
 

@@ -4,7 +4,8 @@ var setups = [];
 var playerDict = {};
 var matchDict = {};
 var matchList = [];
-var timeout = null;
+var challongeTimeout = null;
+var challongeRoom = null;
 
 function getLastPartOfUrl() {
 	var partArray = window.location.href.split('/');
@@ -133,11 +134,8 @@ $(function() {
 		tournamentSocket.emit('add setup');
 	});
 
-	challongeSocket.on('request room', function() {
-		var challongeUrl = $('#challonge-url').val();
-		if (challongeUrl !== '') {
-			challongeSocket.emit('join room', challongeUrl);
-		}
+	challongeSocket.on('room joined', function(room) {
+		challongeRoom = room;
 	});
 
 	challongeSocket.on('tournament info', function(info) {
@@ -152,29 +150,31 @@ $(function() {
 		updateSetupsList(setups);
 		$('.available-match-count').text(availableMatchList.length);
 
-		clearTimeout(timeout);
-		timeout = setTimeout(function() {
+		clearTimeout(challongeTimeout);
+		challongeTimeout = setTimeout(function() {
 			challongeSocket.emit('request tournament info');
 		}, 10000);
 	});
 
-	tournamentSocket.on('request room', function() {
-		var room = getLastPartOfUrl();
-		tournamentSocket.emit('join room', room);
+	tournamentSocket.on('challonge url', function(url) {
+		var $challongeUrl = $('#challonge-url');
+		$challongeUrl.val(url);
+		if (challongeRoom) {
+			challongeSocket.emit('change room', { oldRoom: challongeRoom, newRoom: url });
+			// clear the match count
+			$('.available-match-count').text('-');
+			// clear the matches table
+			$('#matches-tbody').empty();
+		} else {
+			challongeSocket.emit('join room', url);
+		}
+		clearTimeout(challongeTimeout);
 	});
 
 	tournamentSocket.on('tournament info', function(info) {
-		var $challongeUrl;
 		var availableMatchList;
 		if (!info) {
 			return;
-		}
-		if (info.challongeUrl && info.challongeUrl !== '') {
-			$challongeUrl = $('#challonge-url');
-			if ($challongeUrl.val() !== info.challongeUrl) {
-				$challongeUrl.val(info.challongeUrl);
-				challongeSocket.emit('join room', info.challongeUrl);
-			}
 		}
 		setups = info.setups;
 		updateSetupsList(setups);
@@ -183,4 +183,8 @@ $(function() {
 		updateMatchList(availableMatchList, playerDict);
 		$('.available-match-count').text(availableMatchList.length);
 	});
+
+	// Once we have everything set up, let's join the socket.io room
+	// for the tournament
+	tournamentSocket.emit('join room', getLastPartOfUrl());
 });
