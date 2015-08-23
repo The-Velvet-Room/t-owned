@@ -95,9 +95,13 @@ function updateSetupsList(setupsList) {
 		if (setup.status === 'Assigned') {
 			var match = matchDict[setup.matchId];
 			if (match) {
-				var player1 = playerDict[match.player1_id];
-				var player2 = playerDict[match.player2_id];
-				$setup.append('<div>' + player1 + ' vs ' + player2 + '</div>');
+				if (match.state === 'open') {
+					var player1 = playerDict[match.player1_id];
+					var player2 = playerDict[match.player2_id];
+					$setup.append('<div>' + player1 + ' vs ' + player2 + '</div>');
+				} else {
+					tournamentSocket.emit('open setup', i);
+				}
 			}
 			$setup.append('<a href="" class="reassign-setup">Reassign</a>');
 		}
@@ -160,7 +164,6 @@ $(function() {
 	});
 
 	tournamentSocket.on('tournament info', function(info) {
-		var $setupsList;
 		var $challongeUrl;
 		var availableMatchList;
 		if (!info) {
