@@ -125,12 +125,12 @@ $(function() {
 		tournamentSocket.emit('open setup', setupIndex);
 	});
 
-	$('#save-challonge-url').click(function() {
+	$('#save-challonge-url').on('click', function() {
 		var url = $('#challonge-url').val();
 		tournamentSocket.emit('save challonge url', url);
 	});
 
-	$('#add-setup').click(function() {
+	$('#add-setup').on('click', function() {
 		tournamentSocket.emit('add setup');
 	});
 
